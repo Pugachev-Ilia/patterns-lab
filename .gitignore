@@ -1,0 +1,18 @@
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate
+*.tfstate.backup
+outputs.json
+
+# Environment/config
+.env
+.env.*
+
+# IDE/editor
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
