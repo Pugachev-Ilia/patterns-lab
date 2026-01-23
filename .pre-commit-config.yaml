@@ -1,0 +1,81 @@
+repos:
+- repo: local
+  hooks: # Commit message: English-only
+  - id: english-only-commit-msg
+    name: English-only commit message + staged content (ASCII-only)
+    language: system
+    stages: [commit-msg]
+    entry: python3
+    args:
+    - -c
+    - |
+      import subprocess, sys
+      p = sys.argv[1]
+      data = open(p, "rb").read()
+      bad_msg = []
+      bad_capital = []
+      try:
+          data.decode("ascii")
+      except UnicodeDecodeError:
+          text = data.decode("latin-1")
+          for line_no, line in enumerate(text.splitlines(), 1):
+              if any(ord(ch) > 127 for ch in line):
+                  bad_msg.append((p, line_no))
+      else:
+          text = data.decode("ascii")
+
+      # Enforce first non-empty line starts with a capital letter
+      for line_no, line in enumerate(text.splitlines(), 1):
+          if line.strip() == "":
+              continue
+          first = line.lstrip()[:1]
+          if first and not ("A" <= first <= "Z"):
+              bad_capital.append((p, line_no))
+          break
+
+      r = subprocess.run(
+          ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
+          capture_output=True, text=True
+      )
+      if r.returncode != 0:
+          print(r.stderr.strip())
+          sys.exit(r.returncode)
+
+      files = [f for f in r.stdout.splitlines() if f.strip()]
+      bad_files = []
+      skip_ext = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico")
+      skip_files = {"README.md", "infrastructure/README.md"}
+      for f in files:
+          if f.lower().endswith(skip_ext):
+              continue  # allow binary/image assets
+          if f in skip_files:
+              continue  # allow explicit text files with intentional UTF-8
+          show = subprocess.run(["git", "show", f":{f}"], capture_output=True)
+          if show.returncode != 0:
+              continue
+          content = show.stdout
+          try:
+              content.decode("ascii")
+              continue
+          except UnicodeDecodeError:
+              pass
+
+          text = content.decode("latin-1")
+          for line_no, line in enumerate(text.splitlines(), 1):
+              if any(ord(ch) > 127 for ch in line):
+                  bad_files.append((f, line_no))
+
+      if bad_msg or bad_capital or bad_files:
+          if bad_msg:
+              print("ERROR: Commit message contains non-ASCII characters (English-only policy):")
+              for f, line_no in bad_msg:
+                  print(f" - {f}:{line_no}")
+          if bad_capital:
+              print("ERROR: Commit message must start with a capital letter:")
+              for f, line_no in bad_capital:
+                  print(f" - {f}:{line_no}")
+          if bad_files:
+              print("ERROR: Non-ASCII characters found in staged files (English-only policy):")
+              for f, line_no in bad_files:
+                  print(f" - {f}:{line_no}")
+          sys.exit(1)
