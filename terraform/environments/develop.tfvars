@@ -11,3 +11,7 @@ private_subnet_cidrs = ["10.20.10.0/24", "10.20.11.0/24"]
 
 enable_nat_gateway = true
 single_nat_gateway = true
+
+# ECR
+ecr_scan_on_push     = true
+ecr_keep_last_images = 20
