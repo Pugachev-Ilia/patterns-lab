@@ -36,6 +36,17 @@ variable "single_nat_gateway" {
   default = true
 }
 
+# ECR
+variable "ecr_scan_on_push" {
+  type    = bool
+  default = true
+}
+
+variable "ecr_keep_last_images" {
+  type    = number
+  default = 20
+}
+
 # EKS Cluster
 variable "enable_container_insights" {
   type    = bool

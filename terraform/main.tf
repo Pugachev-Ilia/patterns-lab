@@ -48,6 +48,16 @@ module "vpc" {
   tags = local.tags
 }
 
+module "ecr" {
+  source = "./modules/ecr"
+
+  name = "${var.name}-${var.env}"
+  tags = local.tags
+
+  scan_on_push     = var.ecr_scan_on_push
+  keep_last_images = var.ecr_keep_last_images
+}
+
 module "ecs_cluster" {
   source = "./modules/ecs_cluster"
 
@@ -57,3 +67,4 @@ module "ecs_cluster" {
   enable_container_insights = var.enable_container_insights
   tags                      = local.tags
 }
+
