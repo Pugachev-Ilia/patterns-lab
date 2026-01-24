@@ -26,6 +26,6 @@ aws configure # if you are not authorized in AWS
 2. `export AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, etc.`
 3. `terraform plan  -var-file=environments/develop.tfvars`
 4. `terraform apply -var-file=environments/develop.tfvars -auto-approve && terraform output -json > outputs.json`
-5. `terraform destroy`
+5. `terraform destroy -var-file=environments/develop.tfvars`
 
 ---
