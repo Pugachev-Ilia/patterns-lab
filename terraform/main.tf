@@ -47,3 +47,13 @@ module "vpc" {
 
   tags = local.tags
 }
+
+module "ecs_cluster" {
+  source = "./modules/ecs_cluster"
+
+  name = var.name
+  env  = var.env
+
+  enable_container_insights = var.enable_container_insights
+  tags                      = local.tags
+}

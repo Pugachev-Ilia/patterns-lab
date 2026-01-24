@@ -1,3 +1,4 @@
+# Common
 variable "aws_region" {
   type = string
 }
@@ -10,6 +11,7 @@ variable "env" {
   type = string
 }
 
+# VPC
 variable "vpc_cidr" {
   type = string
 }
@@ -30,6 +32,12 @@ variable "enable_nat_gateway" {
 }
 
 variable "single_nat_gateway" {
+  type    = bool
+  default = true
+}
+
+# EKS Cluster
+variable "enable_container_insights" {
   type    = bool
   default = true
 }
