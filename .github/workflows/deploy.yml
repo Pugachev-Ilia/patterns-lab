@@ -1,0 +1,92 @@
+# Ensure that these values are added to the GitHub Actions develop environments secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+# Also add these develop environments variables: AWS_ACCOUNT_ID, AWS_REGION, ECR_REPOSITORY_URL
+
+name: CI - Build & Push (ECR)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-ecr-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build_test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: "17"
+        cache: maven
+
+    - name: Build & test [Maven]
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [[ -f ./mvnw ]]; then
+          chmod +x ./mvnw
+          ./mvnw -B -ntp test package
+        else
+          mvn -B -ntp test package
+        fi
+
+  push_ecr:
+    name: Docker build & push to ECR
+    needs: build_test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    environment: develop
+
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Set image vars
+      id: vars
+      shell: bash
+      run: |
+        set -euo pipefail
+        REGISTRY="${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com"
+        IMAGE="${REGISTRY}/${{ vars.ECR_REPOSITORY_URL }}"
+        echo "registry=${REGISTRY}" >> "$GITHUB_OUTPUT"
+        echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+        echo "sha_tag=${IMAGE}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+        echo "latest_tag=${IMAGE}:latest" >> "$GITHUB_OUTPUT"
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ steps.vars.outputs.sha_tag }}
+          ${{ steps.vars.outputs.latest_tag }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
