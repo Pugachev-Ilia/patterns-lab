@@ -51,4 +51,6 @@ For the main branch uses `develop` environments secrets:
 | AWS_REGION            | variable |
 | ECR_REPOSITORY_URL    | variable |
 
-#Test 
+Production deployments require a GitHub Actions environment named `production`
+with the same variables/secrets and manual approval enabled (Environment protection rules).
+

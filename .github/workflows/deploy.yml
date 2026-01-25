@@ -1,5 +1,5 @@
-# Ensure that these values are added to the GitHub Actions develop environments secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
-# Also add these develop environments variables: AWS_ACCOUNT_ID, AWS_REGION, ECR_REPOSITORY_URL
+# Ensure that these values are added to the GitHub Actions develop environment secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+# Also add these develop environment variables: AWS_ACCOUNT_ID, AWS_REGION, ECR_REPOSITORY_URL, ECS_CLUSTER_NAME, ECS_SERVICE_NAME
 
 name: CI - Build & Push (ECR)
 
@@ -8,6 +8,14 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy_environment:
+        description: "Target environment for manual deployment"
+        type: choice
+        options:
+          - production
+        default: production
 
 concurrency:
   group: ci-ecr-${{ github.ref }}
@@ -45,9 +53,13 @@ jobs:
     name: Docker build & push to ECR
     needs: build_test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
 
     environment: develop
+    outputs:
+      image: ${{ steps.vars.outputs.image }}
+      sha_tag: ${{ steps.vars.outputs.sha_tag }}
+      latest_tag: ${{ steps.vars.outputs.latest_tag }}
 
     permissions:
       contents: read
@@ -93,3 +105,211 @@ jobs:
           ${{ steps.vars.outputs.latest_tag }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+
+    - name: Notify failure
+      if: failure()
+      run: |
+        echo "::error::ECR push failed. Check AWS credentials and ECR repository URL."
+        echo "ECR push failed. Check AWS credentials and ECR repository URL." >> "$GITHUB_STEP_SUMMARY"
+
+  deploy_dev:
+    name: Deploy to ECS (dev)
+    needs: push_ecr
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    environment: develop
+
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Install jq
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y jq
+
+    - name: Register new task definition
+      id: taskdef
+      shell: bash
+      run: |
+        set -euo pipefail
+        CLUSTER="${{ vars.ECS_CLUSTER_NAME }}"
+        SERVICE="${{ vars.ECS_SERVICE_NAME }}"
+        IMAGE="${{ needs.push_ecr.outputs.sha_tag }}"
+        CONTAINER="${{ vars.ECS_CONTAINER_NAME }}"
+        if [[ -z "$CONTAINER" ]]; then
+          CONTAINER="app"
+        fi
+
+        TD_ARN=$(aws ecs describe-services \
+          --cluster "$CLUSTER" \
+          --services "$SERVICE" \
+          --query "services[0].taskDefinition" \
+          --output text)
+
+        aws ecs describe-task-definition \
+          --task-definition "$TD_ARN" \
+          --query "taskDefinition" \
+          > taskdef.json
+
+        jq --arg IMAGE "$IMAGE" --arg CONTAINER "$CONTAINER" '
+          .containerDefinitions |= map(
+            if .name == $CONTAINER then .image = $IMAGE else . end
+          )
+          | del(
+              .taskDefinitionArn,
+              .revision,
+              .status,
+              .requiresAttributes,
+              .compatibilities,
+              .registeredAt,
+              .registeredBy
+            )
+        ' taskdef.json > taskdef.new.json
+
+        NEW_TD_ARN=$(aws ecs register-task-definition \
+          --cli-input-json file://taskdef.new.json \
+          --query "taskDefinition.taskDefinitionArn" \
+          --output text)
+
+        echo "task_definition_arn=$NEW_TD_ARN" >> "$GITHUB_OUTPUT"
+
+    - name: Update ECS service
+      shell: bash
+      run: |
+        set -euo pipefail
+        aws ecs update-service \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --service "${{ vars.ECS_SERVICE_NAME }}" \
+          --task-definition "${{ steps.taskdef.outputs.task_definition_arn }}"
+
+    - name: Wait for deployment to complete
+      run: |
+        aws ecs wait services-stable \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --services "${{ vars.ECS_SERVICE_NAME }}"
+
+    - name: Verify deployment
+      run: |
+        aws ecs describe-services \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --services "${{ vars.ECS_SERVICE_NAME }}" \
+          --query "services[0].deployments[0].rolloutState" \
+          --output text
+
+    - name: Notify failure
+      if: failure()
+      run: |
+        echo "::error::Deployment failed. Check ECS service events."
+        echo "Deployment failed. Check ECS service events." >> "$GITHUB_STEP_SUMMARY"
+
+  deploy_prod:
+    name: Deploy to ECS (prod)
+    needs: push_ecr
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_environment == 'production'
+
+    environment: production
+
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Install jq
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y jq
+
+    - name: Register new task definition
+      id: taskdef
+      shell: bash
+      run: |
+        set -euo pipefail
+        CLUSTER="${{ vars.ECS_CLUSTER_NAME }}"
+        SERVICE="${{ vars.ECS_SERVICE_NAME }}"
+        IMAGE="${{ needs.push_ecr.outputs.sha_tag }}"
+        CONTAINER="${{ vars.ECS_CONTAINER_NAME }}"
+        if [[ -z "$CONTAINER" ]]; then
+          CONTAINER="app"
+        fi
+
+        TD_ARN=$(aws ecs describe-services \
+          --cluster "$CLUSTER" \
+          --services "$SERVICE" \
+          --query "services[0].taskDefinition" \
+          --output text)
+
+        aws ecs describe-task-definition \
+          --task-definition "$TD_ARN" \
+          --query "taskDefinition" \
+          > taskdef.json
+
+        jq --arg IMAGE "$IMAGE" --arg CONTAINER "$CONTAINER" '
+          .containerDefinitions |= map(
+            if .name == $CONTAINER then .image = $IMAGE else . end
+          )
+          | del(
+              .taskDefinitionArn,
+              .revision,
+              .status,
+              .requiresAttributes,
+              .compatibilities,
+              .registeredAt,
+              .registeredBy
+            )
+        ' taskdef.json > taskdef.new.json
+
+        NEW_TD_ARN=$(aws ecs register-task-definition \
+          --cli-input-json file://taskdef.new.json \
+          --query "taskDefinition.taskDefinitionArn" \
+          --output text)
+
+        echo "task_definition_arn=$NEW_TD_ARN" >> "$GITHUB_OUTPUT"
+
+    - name: Update ECS service
+      shell: bash
+      run: |
+        set -euo pipefail
+        aws ecs update-service \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --service "${{ vars.ECS_SERVICE_NAME }}" \
+          --task-definition "${{ steps.taskdef.outputs.task_definition_arn }}"
+
+    - name: Wait for deployment to complete
+      run: |
+        aws ecs wait services-stable \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --services "${{ vars.ECS_SERVICE_NAME }}"
+
+    - name: Verify deployment
+      run: |
+        aws ecs describe-services \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --services "${{ vars.ECS_SERVICE_NAME }}" \
+          --query "services[0].deployments[0].rolloutState" \
+          --output text
+
+    - name: Notify failure
+      if: failure()
+      run: |
+        echo "::error::Production deployment failed. Check ECS service events."
+        echo "Production deployment failed. Check ECS service events." >> "$GITHUB_STEP_SUMMARY"
