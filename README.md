@@ -47,9 +47,11 @@ For the main branch uses `develop` environments secrets:
 |-----------------------|----------|
 | AWS_SECRET_ACCESS_KEY | secret   |
 | AWS_ACCESS_KEY_ID     | secret   |
-| AWS_ACCOUNT_ID        | secret   |
+| AWS_ACCOUNT_ID        | variable |
 | AWS_REGION            | variable |
 | ECR_REPOSITORY_URL    | variable |
+| ECS_CLUSTER_NAME      | variable |
+| ECS_SERVICE_NAME      | variable | 
 
 Production deployments require a GitHub Actions environment named `production`
 with the same variables/secrets and manual approval enabled (Environment protection rules).
