@@ -50,3 +50,5 @@ For the main branch uses `develop` environments secrets:
 | AWS_ACCOUNT_ID        | secret   |
 | AWS_REGION            | variable |
 | ECR_REPOSITORY_URL    | variable |
+
+#Test 
