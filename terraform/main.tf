@@ -68,3 +68,35 @@ module "ecs_cluster" {
   tags                      = local.tags
 }
 
+module "ecs_service" {
+  source = "./modules/ecs_service"
+
+  name = var.name
+  env  = var.env
+  tags = local.tags
+
+  cluster_arn = module.ecs_cluster.cluster_arn
+
+  vpc_id             = module.vpc.vpc_id
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  private_subnet_ids = module.vpc.private_subnet_ids
+
+  container_image   = var.container_image
+  container_name    = "app"
+  app_port          = var.app_port
+  health_check_path = var.alb_health_check_path
+
+  cpu    = var.ecs_cpu
+  memory = var.ecs_memory
+
+  desired_count = var.desired_count
+
+  min_capacity = 1
+  max_capacity = 3
+  cpu_target   = 70
+
+  log_retention_days = var.log_retention_days
+
+  enable_execute_command = var.enable_execute_command
+  environment            = var.container_environment
+}

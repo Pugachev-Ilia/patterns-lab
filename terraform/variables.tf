@@ -52,3 +52,49 @@ variable "enable_container_insights" {
   type    = bool
   default = true
 }
+
+# ECS Service
+variable "container_image" {
+  type        = string
+  description = "Image for ECS task (ECR URL with tag)"
+}
+
+variable "app_port" {
+  type    = number
+  default = 8080
+}
+
+variable "ecs_cpu" {
+  type    = number
+  default = 512
+}
+
+variable "ecs_memory" {
+  type    = number
+  default = 1024
+}
+
+variable "desired_count" {
+  type    = number
+  default = 0
+}
+
+variable "enable_execute_command" {
+  type    = bool
+  default = false
+}
+
+variable "container_environment" {
+  type = map(string)
+  default = {}
+}
+
+variable "alb_health_check_path" {
+  type    = string
+  default = "/"
+}
+
+variable "log_retention_days" {
+  type    = number
+  default = 14
+}
