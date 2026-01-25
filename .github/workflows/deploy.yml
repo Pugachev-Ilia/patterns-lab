@@ -133,6 +133,23 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ vars.AWS_REGION }}
 
+    - name: Validate required variables
+      shell: bash
+      run: |
+        set -euo pipefail
+        missing=0
+        if [[ -z "${{ vars.ECS_CLUSTER_NAME }}" ]]; then
+          echo "::error::Missing required variable ECS_CLUSTER_NAME in the develop environment."
+          missing=1
+        fi
+        if [[ -z "${{ vars.ECS_SERVICE_NAME }}" ]]; then
+          echo "::error::Missing required variable ECS_SERVICE_NAME in the develop environment."
+          missing=1
+        fi
+        if [[ "$missing" -ne 0 ]]; then
+          exit 1
+        fi
+
     - name: Install jq
       run: |
         sudo apt-get update -y
@@ -233,6 +250,23 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Validate required variables
+      shell: bash
+      run: |
+        set -euo pipefail
+        missing=0
+        if [[ -z "${{ vars.ECS_CLUSTER_NAME }}" ]]; then
+          echo "::error::Missing required variable ECS_CLUSTER_NAME in the production environment."
+          missing=1
+        fi
+        if [[ -z "${{ vars.ECS_SERVICE_NAME }}" ]]; then
+          echo "::error::Missing required variable ECS_SERVICE_NAME in the production environment."
+          missing=1
+        fi
+        if [[ "$missing" -ne 0 ]]; then
+          exit 1
+        fi
 
     - name: Install jq
       run: |
