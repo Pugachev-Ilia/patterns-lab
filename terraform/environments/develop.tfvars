@@ -13,5 +13,21 @@ enable_nat_gateway = true
 single_nat_gateway = true
 
 # ECR
-ecr_scan_on_push     = true
+ecr_scan_on_push = true
 ecr_keep_last_images = 20
+
+# ECS Service
+container_image = "590183999008.dkr.ecr.eu-central-1.amazonaws.com/your-repo:latest"
+app_port        = 8080
+
+ecs_cpu = 256
+ecs_memory = 512
+
+# To prevent ECS tasks without an image from being rolled out during infrastructure rollout
+desired_count = 0
+
+log_retention_days = 14
+
+container_environment = {
+  PORT = "8080"
+}
