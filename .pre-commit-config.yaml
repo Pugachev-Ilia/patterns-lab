@@ -25,10 +25,17 @@ repos:
           text = data.decode("ascii")
 
       # Enforce first non-empty line starts with a capital letter
+      # Allow CI skip prefixes like "[skip ci]" before the capitalized summary.
       for line_no, line in enumerate(text.splitlines(), 1):
           if line.strip() == "":
               continue
-          first = line.lstrip()[:1]
+          stripped = line.lstrip()
+          lower = stripped.lower()
+          if lower.startswith("[skip ci]"):
+              after = stripped[len("[skip ci]"):].lstrip()
+              first = after[:1]
+          else:
+              first = stripped[:1]
           if first and not ("A" <= first <= "Z"):
               bad_capital.append((p, line_no))
           break
