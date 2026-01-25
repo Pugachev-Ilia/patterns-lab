@@ -29,3 +29,13 @@ aws configure # if you are not authorized in AWS
 5. `terraform destroy -var-file=environments/develop.tfvars`
 
 ---
+
+### Docker manual commands run
+
+```bash
+docker build -f docker/Dockerfile -t demo:local .
+
+docker run -d --name demo --restart unless-stopped -p 8080:8080 \
+  -e JAVA_OPTS="-Xms128m -Xmx256m" demo:local
+```
+
