@@ -39,3 +39,14 @@ docker run -d --name demo --restart unless-stopped -p 8080:8080 \
   -e JAVA_OPTS="-Xms128m -Xmx256m" demo:local
 ```
 
+### Workflow variables and secrets
+
+For the main branch uses `develop` environments secrets:
+
+| KEY                   | TYPE     |
+|-----------------------|----------|
+| AWS_SECRET_ACCESS_KEY | secret   |
+| AWS_ACCESS_KEY_ID     | secret   |
+| AWS_ACCOUNT_ID        | secret   |
+| AWS_REGION            | variable |
+| ECR_REPOSITORY_URL    | variable |
