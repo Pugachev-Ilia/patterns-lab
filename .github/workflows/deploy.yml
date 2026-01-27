@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   build_test:
-    name: Build & Test
+    name: Java Build & Test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
         fi
 
   push_ecr:
-    name: Docker build & push to ECR
+    name: Docker Build & Push
     needs: build_test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -105,7 +105,7 @@ jobs:
         echo "ECR push failed. Check AWS credentials and ECR repository URL." >> "$GITHUB_STEP_SUMMARY"
 
   deploy_dev:
-    name: Deploy to ECS (dev)
+    name: Deploy (develop)
     needs: push_ecr
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -130,12 +130,19 @@ jobs:
       run: |
         set -euo pipefail
         missing=0
+        ECR_RAW="${{ vars.ECR_REPOSITORY_URL }}"
+        ECR_RAW="${ECR_RAW#\"}"
+        ECR_RAW="${ECR_RAW%\"}"
         if [[ -z "${{ vars.ECS_CLUSTER_NAME }}" ]]; then
           echo "::error::Missing required variable ECS_CLUSTER_NAME in the develop environment."
           missing=1
         fi
         if [[ -z "${{ vars.ECS_SERVICE_NAME }}" ]]; then
           echo "::error::Missing required variable ECS_SERVICE_NAME in the develop environment."
+          missing=1
+        fi
+        if [[ -z "$ECR_RAW" ]]; then
+          echo "::error::Missing required variable ECR_REPOSITORY_URL in the develop environment."
           missing=1
         fi
         if [[ "$missing" -ne 0 ]]; then
@@ -223,7 +230,7 @@ jobs:
         echo "Deployment failed. Check ECS service events." >> "$GITHUB_STEP_SUMMARY"
 
   deploy_prod:
-    name: Deploy to ECS (prod)
+    name: Deploy (production)
     needs: [push_ecr, deploy_dev]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -248,6 +255,9 @@ jobs:
       run: |
         set -euo pipefail
         missing=0
+        ECR_RAW="${{ vars.ECR_REPOSITORY_URL }}"
+        ECR_RAW="${ECR_RAW#\"}"
+        ECR_RAW="${ECR_RAW%\"}"
         if [[ -z "${{ vars.ECS_CLUSTER_NAME }}" ]]; then
           echo "::error::Missing required variable ECS_CLUSTER_NAME in the production environment."
           missing=1
@@ -256,7 +266,7 @@ jobs:
           echo "::error::Missing required variable ECS_SERVICE_NAME in the production environment."
           missing=1
         fi
-        if [[ -z "${{ vars.ECR_REPOSITORY_URL }}" ]]; then
+        if [[ -z "$ECR_RAW" ]]; then
           echo "::error::Missing required variable ECR_REPOSITORY_URL in the production environment."
           missing=1
         fi
