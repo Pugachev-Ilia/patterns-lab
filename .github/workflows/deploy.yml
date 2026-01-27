@@ -1,21 +1,13 @@
 # Ensure that these values are added to the GitHub Actions develop environment secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 # Also add these develop environment variables: AWS_ACCOUNT_ID, AWS_REGION, ECR_REPOSITORY_URL, ECS_CLUSTER_NAME, ECS_SERVICE_NAME
 
-name: CI - Build & Push (ECR)
+name: Java CI
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      deploy_environment:
-        description: "Target environment for manual deployment"
-        type: choice
-        options:
-          - production
-        default: production
 
 concurrency:
   group: ci-ecr-${{ github.ref }}
@@ -53,7 +45,7 @@ jobs:
     name: Docker build & push to ECR
     needs: build_test
     runs-on: ubuntu-latest
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     environment: develop
     outputs:
@@ -88,7 +80,7 @@ jobs:
           echo "sha_tag=${IMAGE}:${GITHUB_SHA}"
           echo "latest_tag=${IMAGE}:latest"
         } >> "$GITHUB_OUTPUT"
-    
+
 
 
     - name: Set up Docker Buildx
@@ -232,9 +224,9 @@ jobs:
 
   deploy_prod:
     name: Deploy to ECS (prod)
-    needs: push_ecr
+    needs: deploy_dev
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_environment == 'production'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     environment: production
 
