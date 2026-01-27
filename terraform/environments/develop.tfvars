@@ -17,7 +17,7 @@ ecr_scan_on_push = true
 ecr_keep_last_images = 20
 
 # ECS Service
-container_image = "590183999008.dkr.ecr.eu-central-1.amazonaws.com/your-repo:latest"
+container_image = "590183999008.dkr.ecr.eu-central-1.amazonaws.com/patterns-lab-develop:latest"
 app_port        = 8080
 
 ecs_cpu = 256
