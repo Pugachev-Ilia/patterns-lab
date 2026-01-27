@@ -224,7 +224,7 @@ jobs:
 
   deploy_prod:
     name: Deploy to ECS (prod)
-    needs: deploy_dev
+    needs: [push_ecr, deploy_dev]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
@@ -254,6 +254,14 @@ jobs:
         fi
         if [[ -z "${{ vars.ECS_SERVICE_NAME }}" ]]; then
           echo "::error::Missing required variable ECS_SERVICE_NAME in the production environment."
+          missing=1
+        fi
+        if [[ -z "${{ vars.ECR_REPOSITORY_URL }}" ]]; then
+          echo "::error::Missing required variable ECR_REPOSITORY_URL in the production environment."
+          missing=1
+        fi
+        if [[ -z "${{ needs.push_ecr.outputs.sha_tag }}" ]]; then
+          echo "::error::Missing image tag from push_ecr output. Check push_ecr job outputs."
           missing=1
         fi
         if [[ "$missing" -ne 0 ]]; then
