@@ -79,6 +79,21 @@ variable "desired_count" {
   default = 0
 }
 
+variable "min_capacity" {
+  type    = number
+  default = 1
+}
+
+variable "max_capacity" {
+  type    = number
+  default = 3
+}
+
+variable "cpu_target" {
+  type    = number
+  default = 70
+}
+
 variable "enable_execute_command" {
   type    = bool
   default = false
@@ -92,6 +107,11 @@ variable "container_environment" {
 variable "alb_health_check_path" {
   type    = string
   default = "/"
+}
+
+variable "health_check_grace_period_seconds" {
+  type    = number
+  default = 60
 }
 
 variable "log_retention_days" {

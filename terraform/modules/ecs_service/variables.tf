@@ -51,6 +51,11 @@ variable "health_check_path" {
   default = "/"
 }
 
+variable "health_check_grace_period_seconds" {
+  type        = number
+  description = "Grace period before ELB health checks start"
+  default     = 60
+}
 variable "cpu" {
   type        = number
   description = "Task CPU units (256, 512, 1024, ...)"

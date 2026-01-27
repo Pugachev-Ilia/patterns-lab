@@ -20,11 +20,16 @@ ecr_keep_last_images = 20
 container_image = "590183999008.dkr.ecr.eu-central-1.amazonaws.com/patterns-lab-develop:latest"
 app_port        = 8080
 
-ecs_cpu = 256
-ecs_memory = 512
+ecs_cpu = 512
+ecs_memory = 1024
+
+# ALB
+alb_health_check_path = "/health"
+health_check_grace_period_seconds = 60
 
 # To prevent ECS tasks without an image from being rolled out during infrastructure rollout
 desired_count = 0
+min_capacity  = 0
 
 log_retention_days = 14
 

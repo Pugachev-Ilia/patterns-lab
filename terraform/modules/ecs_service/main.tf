@@ -194,6 +194,7 @@ resource "aws_ecs_service" "app" {
   launch_type = "FARGATE"
 
   enable_execute_command = var.enable_execute_command
+  health_check_grace_period_seconds = var.health_check_grace_period_seconds
 
   network_configuration {
     subnets          = var.private_subnet_ids

@@ -85,15 +85,16 @@ module "ecs_service" {
   container_name    = "app"
   app_port          = var.app_port
   health_check_path = var.alb_health_check_path
+  health_check_grace_period_seconds = var.health_check_grace_period_seconds
 
   cpu    = var.ecs_cpu
   memory = var.ecs_memory
 
   desired_count = var.desired_count
 
-  min_capacity = 1
-  max_capacity = 3
-  cpu_target   = 70
+  min_capacity = var.min_capacity
+  max_capacity = var.max_capacity
+  cpu_target   = var.cpu_target
 
   log_retention_days = var.log_retention_days
 
