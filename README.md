@@ -62,8 +62,10 @@ For the main branch uses `develop` environments secrets:
 | AWS_REGION            | variable |
 | ECR_REPOSITORY_URL    | variable |
 | ECS_CLUSTER_NAME      | variable |
-| ECS_SERVICE_NAME      | variable | 
+| ECS_SERVICE_NAME      | variable |
+| ECS_CONTAINER_NAME    | variable |
+| NEW_RELIC_APP_NAME    | variable |
+| NEW_RELIC_LICENSE_KEY | secret   |
 
 Production deployments require a GitHub Actions environment named `production`
 with the same variables/secrets and manual approval enabled (Environment protection rules).
-

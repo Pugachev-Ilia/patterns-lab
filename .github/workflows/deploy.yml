@@ -228,7 +228,8 @@ jobs:
         aws ecs update-service \
           --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
           --service "${{ vars.ECS_SERVICE_NAME }}" \
-          --task-definition "${{ steps.taskdef.outputs.task_definition_arn }}"
+          --task-definition "${{ steps.taskdef.outputs.task_definition_arn }}" \
+          --desired-count 1
 
     - name: Wait for deployment to complete
       run: |
@@ -378,7 +379,8 @@ jobs:
         aws ecs update-service \
           --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
           --service "${{ vars.ECS_SERVICE_NAME }}" \
-          --task-definition "${{ steps.taskdef.outputs.task_definition_arn }}"
+          --task-definition "${{ steps.taskdef.outputs.task_definition_arn }}" \
+          --desired-count 1
 
     - name: Wait for deployment to complete
       run: |
