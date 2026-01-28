@@ -22,11 +22,20 @@ RUN apt-get update \
   && groupadd -r app \
   && useradd -r -g app -d /app -s /usr/sbin/nologin app
 
+# New Relic Java agent
+RUN mkdir -p /opt/newrelic \
+  && curl -fsSL -o /opt/newrelic/newrelic.jar \
+     https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic.jar \
+  && chown -R app:app /opt/newrelic
+
 # Copy the produced jar from build stage
 COPY --from=build /workspace/target/demo-0.0.1.jar /app/app.jar
 
 # Optional JVM tuning via env (ECS task definition can set it)
 ENV JAVA_OPTS=""
+# JVM auto-inject agent
+ENV JAVA_TOOL_OPTIONS="-javaagent:/opt/newrelic/newrelic.jar"
+
 EXPOSE 8080
 
 # Container-level healthcheck (expects GET /health returns 200)
