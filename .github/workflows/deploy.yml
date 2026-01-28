@@ -133,6 +133,14 @@ jobs:
         ECR_RAW="${{ vars.ECR_REPOSITORY_URL }}"
         ECR_RAW="${ECR_RAW#\"}"
         ECR_RAW="${ECR_RAW%\"}"
+        if [[ -z "${{ vars.NEW_RELIC_APP_NAME }}" ]]; then
+          echo "::error::Missing required variable NEW_RELIC_APP_NAME in the develop environment."
+          missing=1
+        fi
+        if [[ -z "${{ secrets.NEW_RELIC_LICENSE_KEY }}" ]]; then
+          echo "::error::Missing required secret NEW_RELIC_LICENSE_KEY in the develop environment."
+          missing=1
+        fi
         if [[ -z "${{ vars.ECS_CLUSTER_NAME }}" ]]; then
           echo "::error::Missing required variable ECS_CLUSTER_NAME in the develop environment."
           missing=1
@@ -163,6 +171,8 @@ jobs:
         SERVICE="${{ vars.ECS_SERVICE_NAME }}"
         IMAGE="${{ needs.push_ecr.outputs.sha_tag }}"
         CONTAINER="${{ vars.ECS_CONTAINER_NAME }}"
+        NR_APP_NAME="${{ vars.NEW_RELIC_APP_NAME }}"
+        NR_LICENSE_KEY="${{ secrets.NEW_RELIC_LICENSE_KEY }}"
         if [[ -z "$CONTAINER" ]]; then
           CONTAINER="app"
         fi
@@ -178,9 +188,20 @@ jobs:
           --query "taskDefinition" \
           > taskdef.json
 
-        jq --arg IMAGE "$IMAGE" --arg CONTAINER "$CONTAINER" '
+        jq --arg IMAGE "$IMAGE" --arg CONTAINER "$CONTAINER" \
+           --arg NR_APP_NAME "$NR_APP_NAME" --arg NR_LICENSE_KEY "$NR_LICENSE_KEY" '
           .containerDefinitions |= map(
-            if .name == $CONTAINER then .image = $IMAGE else . end
+            if .name == $CONTAINER then
+              .image = $IMAGE
+              | .environment = (
+                  (.environment // [])
+                  | map(select(.name != "NEW_RELIC_APP_NAME" and .name != "NEW_RELIC_LICENSE_KEY"))
+                  + [
+                      {"name":"NEW_RELIC_APP_NAME","value":$NR_APP_NAME},
+                      {"name":"NEW_RELIC_LICENSE_KEY","value":$NR_LICENSE_KEY}
+                    ]
+                )
+            else . end
           )
           | del(
               .taskDefinitionArn,
@@ -258,6 +279,14 @@ jobs:
         ECR_RAW="${{ vars.ECR_REPOSITORY_URL }}"
         ECR_RAW="${ECR_RAW#\"}"
         ECR_RAW="${ECR_RAW%\"}"
+        if [[ -z "${{ vars.NEW_RELIC_APP_NAME }}" ]]; then
+          echo "::error::Missing required variable NEW_RELIC_APP_NAME in the production environment."
+          missing=1
+        fi
+        if [[ -z "${{ secrets.NEW_RELIC_LICENSE_KEY }}" ]]; then
+          echo "::error::Missing required secret NEW_RELIC_LICENSE_KEY in the production environment."
+          missing=1
+        fi
         if [[ -z "${{ vars.ECS_CLUSTER_NAME }}" ]]; then
           echo "::error::Missing required variable ECS_CLUSTER_NAME in the production environment."
           missing=1
@@ -292,6 +321,8 @@ jobs:
         SERVICE="${{ vars.ECS_SERVICE_NAME }}"
         IMAGE="${{ needs.push_ecr.outputs.sha_tag }}"
         CONTAINER="${{ vars.ECS_CONTAINER_NAME }}"
+        NR_APP_NAME="${{ vars.NEW_RELIC_APP_NAME }}"
+        NR_LICENSE_KEY="${{ secrets.NEW_RELIC_LICENSE_KEY }}"
         if [[ -z "$CONTAINER" ]]; then
           CONTAINER="app"
         fi
@@ -307,9 +338,20 @@ jobs:
           --query "taskDefinition" \
           > taskdef.json
 
-        jq --arg IMAGE "$IMAGE" --arg CONTAINER "$CONTAINER" '
+        jq --arg IMAGE "$IMAGE" --arg CONTAINER "$CONTAINER" \
+           --arg NR_APP_NAME "$NR_APP_NAME" --arg NR_LICENSE_KEY "$NR_LICENSE_KEY" '
           .containerDefinitions |= map(
-            if .name == $CONTAINER then .image = $IMAGE else . end
+            if .name == $CONTAINER then
+              .image = $IMAGE
+              | .environment = (
+                  (.environment // [])
+                  | map(select(.name != "NEW_RELIC_APP_NAME" and .name != "NEW_RELIC_LICENSE_KEY"))
+                  + [
+                      {"name":"NEW_RELIC_APP_NAME","value":$NR_APP_NAME},
+                      {"name":"NEW_RELIC_LICENSE_KEY","value":$NR_LICENSE_KEY}
+                    ]
+                )
+            else . end
           )
           | del(
               .taskDefinitionArn,
