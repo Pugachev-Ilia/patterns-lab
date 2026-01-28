@@ -32,11 +32,11 @@ aws configure # if you are not authorized in AWS
 
 **Production**
 
-- `terraform init -backend-config=environments/production.backend.hcl`
+- `terraform init -backend-config=environments/production.backend.hcl -reconfigure `
 - `export AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, etc.`
 - `terraform plan  -var-file=environments/production.tfvars`
--
-`terraform apply -var-file=environments/production.tfvars -auto-approve && terraform output -json > production-outputs.json`
+  -
+  `terraform apply -var-file=environments/production.tfvars -auto-approve && terraform output -json > production-outputs.json`
 - `terraform destroy -var-file=environments/production.tfvars`
 
 ---
@@ -54,6 +54,8 @@ docker run -d --name demo --restart unless-stopped -p 8080:8080 \
 
 For the main branch uses `develop` environments secrets:
 
+### Develop:
+
 | KEY                   | TYPE     |
 |-----------------------|----------|
 | AWS_SECRET_ACCESS_KEY | secret   |
@@ -69,3 +71,20 @@ For the main branch uses `develop` environments secrets:
 
 Production deployments require a GitHub Actions environment named `production`
 with the same variables/secrets and manual approval enabled (Environment protection rules).
+
+### Production:
+
+**ECR_REPOSITORY_URL** - here you need to add values from develop, because develop image promote to production
+
+| KEY                   | TYPE     |
+|-----------------------|----------|
+| AWS_SECRET_ACCESS_KEY | secret   |
+| AWS_ACCESS_KEY_ID     | secret   |
+| AWS_ACCOUNT_ID        | variable |
+| AWS_REGION            | variable |
+| ECR_REPOSITORY_URL    | variable | 
+| ECS_CLUSTER_NAME      | variable |
+| ECS_SERVICE_NAME      | variable |
+| ECS_CONTAINER_NAME    | variable |
+| NEW_RELIC_APP_NAME    | variable |
+| NEW_RELIC_LICENSE_KEY | secret   |
