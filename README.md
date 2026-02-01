@@ -53,19 +53,17 @@ On push to `main`, the pipeline builds and tests the app, builds and pushes the 
 
 ```mermaid
 flowchart LR
-      Git("Push to main") --> Build("Java Build & Test")
-      Build --> Push("Docker Build & Push")
-      Push --> Dev("Deploy(develop)")
-      Dev --> Approval("Manual approval")
-  %% top row    
-  subgraph TOP[ ]
-    direction LR
-      Approval --> Prod("Deploy(production)")
+    subgraph TOP[ ]
+      direction LR
+      Approval("Manual approval") --> Prod("Deploy(production)")
     end
-    
-      GitPR("Create PR") --> OnlyTest("Java Build & Test")
+      Git("Push to main") --> Build("Java Build & Test") --> Push("Docker Build & Push") --> Dev("Deploy(develop)") 
       
-      style Approval fill:#d1fae5,stroke:#059669,stroke-width:2px,color:#065f46
+      GitPR("Create PR") --> OnlyTest("Java Build & Test") 
+      
+      Dev --> Approval
+      
+    style Approval fill:#d1fae5,stroke:#059669,stroke-width:2px,color:#065f46
 ```
 
 ## Infrastructure overview
