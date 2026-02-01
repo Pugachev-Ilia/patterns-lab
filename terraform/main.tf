@@ -86,6 +86,7 @@ module "ecs_service" {
   app_port          = var.app_port
   health_check_path = var.alb_health_check_path
   health_check_grace_period_seconds = var.health_check_grace_period_seconds
+  deregistration_delay_seconds      = var.deregistration_delay_seconds
 
   cpu    = var.ecs_cpu
   memory = var.ecs_memory
@@ -95,6 +96,7 @@ module "ecs_service" {
   min_capacity = var.min_capacity
   max_capacity = var.max_capacity
   cpu_target   = var.cpu_target
+  enable_autoscaling = var.enable_autoscaling
 
   log_retention_days = var.log_retention_days
 

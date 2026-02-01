@@ -94,6 +94,11 @@ variable "cpu_target" {
   default = 70
 }
 
+variable "enable_autoscaling" {
+  type    = bool
+  default = false
+}
+
 variable "enable_execute_command" {
   type    = bool
   default = false
@@ -112,6 +117,11 @@ variable "alb_health_check_path" {
 variable "health_check_grace_period_seconds" {
   type    = number
   default = 60
+}
+
+variable "deregistration_delay_seconds" {
+  type    = number
+  default = 30
 }
 
 variable "log_retention_days" {
