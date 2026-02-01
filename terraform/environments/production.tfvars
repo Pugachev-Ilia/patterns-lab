@@ -20,8 +20,8 @@ ecr_keep_last_images = 20
 container_image = "590183999008.dkr.ecr.eu-central-1.amazonaws.com/patterns-lab-develop:latest"
 app_port        = 8080
 
-ecs_cpu = 256
-ecs_memory = 512
+ecs_cpu = 1024
+ecs_memory = 2048
 
 # ALB
 alb_health_check_path             = "/health"
