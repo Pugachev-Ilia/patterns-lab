@@ -17,20 +17,20 @@ ecr_scan_on_push = true
 ecr_keep_last_images = 20
 
 # ECS Service
-container_image = "590183999008.dkr.ecr.eu-central-1.amazonaws.com/your-repo:latest"
+container_image = "590183999008.dkr.ecr.eu-central-1.amazonaws.com/patterns-lab-develop:latest"
 app_port        = 8080
 
 ecs_cpu = 256
 ecs_memory = 512
 
 # ALB
-alb_health_check_path = "/health"
+alb_health_check_path             = "/health"
 health_check_grace_period_seconds = 120
 deregistration_delay_seconds = 30
 
 # To prevent ECS tasks without an image from being rolled out during infrastructure rollout
-desired_count = 0
-min_capacity  = 1
+desired_count      = 0
+min_capacity       = 1
 enable_autoscaling = false
 
 log_retention_days = 14
