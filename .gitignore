@@ -5,6 +5,7 @@ terraform.tfstate.backup
 *.tfstate.backup
 outputs.json
 *-outputs.json
+test/
 
 # Environment/config
 .env
