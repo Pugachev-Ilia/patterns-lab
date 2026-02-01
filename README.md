@@ -11,6 +11,10 @@
 
 ## Architecture diagram
 
+### Architecture overview
+
+High-level view of the infrastructure components and their relationships.
+
 ```mermaid
 flowchart LR
   User["Users/Clients"] --> ALB["ALB (public subnets)"]
@@ -26,6 +30,38 @@ flowchart LR
     IGW["Internet Gateway"] --> Pub
     NAT["NAT Gateway"] --> Priv
   end
+```
+
+### Networking flow
+
+Client requests flow through the public ALB to ECS tasks in private subnets, and responses return the same path. NAT is used only for outbound traffic (e.g., pulling images or calling external APIs).
+
+```mermaid
+sequenceDiagram
+  participant Client as Internet Client
+  participant ALB as ALB (Public)
+  participant ECS as ECS Task (Private)
+  Client->>ALB: HTTP request
+  ALB->>ECS: Forward to target group
+  ECS-->>ALB: HTTP response
+  ALB-->>Client: HTTP response
+```
+
+### CI/CD flow
+
+On push to `main`, the pipeline builds and tests the app, builds and pushes the Docker image to ECR, then deploys to ECS (dev → prod with approval).
+
+```mermaid
+flowchart LR
+  Git("Push to main") --> Build("Java Build & Test")
+  Build --> Push("Docker Build & Push")
+  Push --> Dev("Deploy(develop)")
+  Dev --> Approval("Manual approval")
+  Approval --> Prod("Deploy(production)")
+
+  GitPR("Create PR") --> OnlyTest("Java Build & Test")
+  
+  style Approval fill:#d1fae5,stroke:#059669,stroke-width:2px,color:#065f46
 ```
 
 ## Infrastructure overview
