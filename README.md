@@ -3,11 +3,43 @@
 ## Table of Contents
 
 - [Infrastructure overview](#infrastructure-overview)
-- [Required AWS credentials and permissions](#required-aws-credentials-and-permissions)
 - [Prerequisites & setup instructions](#prerequisites--setup-instructions)
+- [Required AWS credentials and permissions](#required-aws-credentials-and-permissions)
 - [Terraform run commands](#terraform-run-commands)
 - [Build application](#build-application)
 - [Required GitHub secrets](#required-github-secrets)
+
+
+## Repository structure
+
+```
+.
+|-- .github
+|   |-- workflows
+|       |-- deploy.yml
+|-- docker
+|   |-- Dockerfile
+|-- src
+|   |-- resources
+|       |-- application.properties
+|-- terraform
+|   |-- environments
+|   |   |-- develop.backend.hcl
+|   |   |-- develop.tfvars
+|   |   |-- production.backend.hcl
+|   |   |-- production.tfvars
+|   |-- modules
+|   |   |-- ecs_cluster
+|   |   |-- ecs_service
+|   |   |-- ecr
+|   |   |-- vpc
+|   |-- main.tf
+|   |-- outputs.tf
+|   |-- variables.tf
+|-- README.md
+|-- pom.xml
+|-- Makefile
+```
 
 ## Architecture diagram
 
