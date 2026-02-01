@@ -221,6 +221,23 @@ jobs:
 
         echo "task_definition_arn=$NEW_TD_ARN" >> "$GITHUB_OUTPUT"
 
+    - name: Disable autoscaling (during deploy)
+      shell: bash
+      run: |
+        set -euo pipefail
+        CLUSTER="${{ vars.ECS_CLUSTER_NAME }}"
+        SERVICE="${{ vars.ECS_SERVICE_NAME }}"
+        aws application-autoscaling delete-scaling-policy \
+          --service-namespace ecs \
+          --scalable-dimension ecs:service:DesiredCount \
+          --resource-id "service/${CLUSTER}/${SERVICE}" \
+          --policy-name "${SERVICE}-cpu" || true
+
+        aws application-autoscaling deregister-scalable-target \
+          --service-namespace ecs \
+          --scalable-dimension ecs:service:DesiredCount \
+          --resource-id "service/${CLUSTER}/${SERVICE}" || true
+
     - name: Update ECS service
       shell: bash
       run: |
@@ -414,6 +431,23 @@ jobs:
           --output text)
 
         echo "task_definition_arn=$NEW_TD_ARN" >> "$GITHUB_OUTPUT"
+
+    - name: Disable autoscaling (during deploy)
+      shell: bash
+      run: |
+        set -euo pipefail
+        CLUSTER="${{ vars.ECS_CLUSTER_NAME }}"
+        SERVICE="${{ vars.ECS_SERVICE_NAME }}"
+        aws application-autoscaling delete-scaling-policy \
+          --service-namespace ecs \
+          --scalable-dimension ecs:service:DesiredCount \
+          --resource-id "service/${CLUSTER}/${SERVICE}" \
+          --policy-name "${SERVICE}-cpu" || true
+
+        aws application-autoscaling deregister-scalable-target \
+          --service-namespace ecs \
+          --scalable-dimension ecs:service:DesiredCount \
+          --resource-id "service/${CLUSTER}/${SERVICE}" || true
 
     - name: Update ECS service
       shell: bash

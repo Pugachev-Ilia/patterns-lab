@@ -8,6 +8,7 @@
 - [Terraform run commands](#terraform-run-commands)
 - [Build application](#build-application)
 - [Required GitHub secrets](#required-github-secrets)
+- [Monitoring & Observability](#monitoring--observability)
 
 
 ## Repository structure
@@ -211,6 +212,38 @@ For the main branch uses `develop` environments secrets:
 | ECS_CONTAINER_NAME    | variable |
 | NEW_RELIC_APP_NAME    | variable |
 | NEW_RELIC_LICENSE_KEY | secret   |
+
+---
+
+## Monitoring & Observability
+
+This project uses New Relic for APM and ECS monitoring, plus CloudWatch Logs for AWS‑native logging. Since it is quite difficult to extract any application configuration from New Relic, only the basic principles are described here.
+
+**New Relic integration**
+- Java agent is bundled in the Docker image and injected via `JAVA_TOOL_OPTIONS=-javaagent:/opt/newrelic/newrelic.jar`.
+- Runtime configuration is provided through environment variables at deploy time:
+  - `NEW_RELIC_APP_NAME` (GitHub Environment variable)
+  - `NEW_RELIC_LICENSE_KEY` (GitHub Environment secret)
+- This enables New Relic APM for the Java app and links traces/transactions to the service.
+- Custom attributes/metrics can be added via agent config or application instrumentation if needed.
+
+**Infrastructure monitoring**
+- New Relic Infrastructure can be enabled for ECS/Fargate by following New Relic’s ECS integration guide.
+- Suggested alert conditions:
+  - CPU utilization > 80%
+  - Memory utilization > 80%
+  - Application error rate/exceptions (APM error rate)
+- Create a dashboard showing key metrics: request rate, latency, error rate, CPU/memory, and container restarts.
+
+**Logging**
+- ECS tasks send logs to CloudWatch Logs (log group `/ecs/<app>`).
+- Log retention is configured via Terraform (>= 7 days; current default is 14).
+- Optionally, forward CloudWatch Logs to New Relic Logs for centralized observability.
+
+**Health checks**
+- ALB health check is configured to call `/health` on port `8080`.
+- Endpoint: `http://<alb-dns-name>/health`.
+- Health status can be added to New Relic dashboards/alerts if desired.
 
 Production deployments require a GitHub Actions environment named `production`
 with the same variables/secrets and manual approval enabled (Environment protection rules).
