@@ -63,15 +63,16 @@ resource "aws_lb_target_group" "app" {
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = var.vpc_id
+  deregistration_delay = var.deregistration_delay_seconds
 
   health_check {
     path                = var.health_check_path
     protocol            = "HTTP"
     matcher             = "200-399"
     interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
+    timeout             = 10
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
   }
 
   tags = merge(local.tags, { Name = "${local.base_name}-tg" })
@@ -217,6 +218,7 @@ resource "aws_ecs_service" "app" {
 }
 
 resource "aws_appautoscaling_target" "ecs" {
+  count              = var.enable_autoscaling ? 1 : 0
   min_capacity       = var.min_capacity
   max_capacity       = var.max_capacity
   resource_id        = "service/${split("/", var.cluster_arn)[1]}/${aws_ecs_service.app.name}"
@@ -225,11 +227,12 @@ resource "aws_appautoscaling_target" "ecs" {
 }
 
 resource "aws_appautoscaling_policy" "cpu" {
+  count              = var.enable_autoscaling ? 1 : 0
   name               = "${local.base_name}-cpu"
   policy_type        = "TargetTrackingScaling"
-  resource_id        = aws_appautoscaling_target.ecs.resource_id
-  scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension
-  service_namespace  = aws_appautoscaling_target.ecs.service_namespace
+  resource_id        = aws_appautoscaling_target.ecs[0].resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs[0].scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs[0].service_namespace
 
   target_tracking_scaling_policy_configuration {
     predefined_metric_specification {

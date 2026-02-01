@@ -56,6 +56,12 @@ variable "health_check_grace_period_seconds" {
   description = "Grace period before ELB health checks start"
   default     = 60
 }
+
+variable "deregistration_delay_seconds" {
+  type        = number
+  description = "Target group deregistration delay in seconds"
+  default     = 30
+}
 variable "cpu" {
   type        = number
   description = "Task CPU units (256, 512, 1024, ...)"
@@ -90,6 +96,12 @@ variable "cpu_target" {
   type        = number
   description = "Target CPU utilization (%)"
   default     = 70
+}
+
+variable "enable_autoscaling" {
+  type        = bool
+  description = "Enable ECS service autoscaling resources"
+  default     = false
 }
 
 variable "log_group_name" {
