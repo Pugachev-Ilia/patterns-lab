@@ -209,6 +209,9 @@ resource "aws_ecs_service" "app" {
     container_port   = var.app_port
   }
 
+  deployment_minimum_healthy_percent = var.deployment_minimum_healthy_percent
+  deployment_maximum_percent         = var.deployment_maximum_percent
+
   # Designed to enable infrastructure updates without affecting raised ECS tasks
   lifecycle {
     ignore_changes = [desired_count]

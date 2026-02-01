@@ -248,7 +248,31 @@ jobs:
           --task-definition "${{ steps.taskdef.outputs.task_definition_arn }}" \
           --desired-count 1
 
+    - name: Wait for deployment to complete
+      run: |
+        aws ecs wait services-stable \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --services "${{ vars.ECS_SERVICE_NAME }}"
+
+    - name: Debug on failure
+      if: failure()
+      run: |
+        set -euo pipefail
+        aws ecs describe-services \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --services "${{ vars.ECS_SERVICE_NAME }}" \
+          --query "services[0].events[0:5]" \
+          --output table || true
+
+        aws ecs list-tasks \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --service-name "${{ vars.ECS_SERVICE_NAME }}" \
+          --desired-status STOPPED \
+          --max-items 5 \
+          --output text || true
+
     - name: Enable autoscaling (CPU 85%)
+      if: success()
       shell: bash
       run: |
         set -euo pipefail
@@ -273,29 +297,6 @@ jobs:
           --policy-name "${SERVICE}-cpu" \
           --policy-type TargetTrackingScaling \
           --target-tracking-scaling-policy-configuration "PredefinedMetricSpecification={PredefinedMetricType=ECSServiceAverageCPUUtilization},TargetValue=85,ScaleInCooldown=60,ScaleOutCooldown=60"
-
-    - name: Wait for deployment to complete
-      run: |
-        aws ecs wait services-stable \
-          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
-          --services "${{ vars.ECS_SERVICE_NAME }}"
-
-    - name: Debug on failure
-      if: failure()
-      run: |
-        set -euo pipefail
-        aws ecs describe-services \
-          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
-          --services "${{ vars.ECS_SERVICE_NAME }}" \
-          --query "services[0].events[0:5]" \
-          --output table || true
-
-        aws ecs list-tasks \
-          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
-          --service-name "${{ vars.ECS_SERVICE_NAME }}" \
-          --desired-status STOPPED \
-          --max-items 5 \
-          --output text || true
 
     - name: Verify deployment
       run: |
@@ -459,7 +460,31 @@ jobs:
           --task-definition "${{ steps.taskdef.outputs.task_definition_arn }}" \
           --desired-count 1
 
+    - name: Wait for deployment to complete
+      run: |
+        aws ecs wait services-stable \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --services "${{ vars.ECS_SERVICE_NAME }}"
+
+    - name: Debug on failure
+      if: failure()
+      run: |
+        set -euo pipefail
+        aws ecs describe-services \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --services "${{ vars.ECS_SERVICE_NAME }}" \
+          --query "services[0].events[0:5]" \
+          --output table || true
+
+        aws ecs list-tasks \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --service-name "${{ vars.ECS_SERVICE_NAME }}" \
+          --desired-status STOPPED \
+          --max-items 5 \
+          --output text || true
+
     - name: Enable autoscaling (CPU 85%)
+      if: success()
       shell: bash
       run: |
         set -euo pipefail
@@ -484,29 +509,6 @@ jobs:
           --policy-name "${SERVICE}-cpu" \
           --policy-type TargetTrackingScaling \
           --target-tracking-scaling-policy-configuration "PredefinedMetricSpecification={PredefinedMetricType=ECSServiceAverageCPUUtilization},TargetValue=85,ScaleInCooldown=60,ScaleOutCooldown=60"
-
-    - name: Wait for deployment to complete
-      run: |
-        aws ecs wait services-stable \
-          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
-          --services "${{ vars.ECS_SERVICE_NAME }}"
-
-    - name: Debug on failure
-      if: failure()
-      run: |
-        set -euo pipefail
-        aws ecs describe-services \
-          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
-          --services "${{ vars.ECS_SERVICE_NAME }}" \
-          --query "services[0].events[0:5]" \
-          --output table || true
-
-        aws ecs list-tasks \
-          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
-          --service-name "${{ vars.ECS_SERVICE_NAME }}" \
-          --desired-status STOPPED \
-          --max-items 5 \
-          --output text || true
 
     - name: Verify deployment
       run: |

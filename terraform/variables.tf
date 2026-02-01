@@ -99,6 +99,16 @@ variable "enable_autoscaling" {
   default = false
 }
 
+variable "deployment_minimum_healthy_percent" {
+  type    = number
+  default = 50
+}
+
+variable "deployment_maximum_percent" {
+  type    = number
+  default = 200
+}
+
 variable "enable_execute_command" {
   type    = bool
   default = false

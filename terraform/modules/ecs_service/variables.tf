@@ -122,6 +122,18 @@ variable "enable_execute_command" {
   default     = false
 }
 
+variable "deployment_minimum_healthy_percent" {
+  type        = number
+  description = "ECS deployment minimum healthy percent"
+  default     = 50
+}
+
+variable "deployment_maximum_percent" {
+  type        = number
+  description = "ECS deployment maximum percent"
+  default     = 200
+}
+
 variable "environment" {
   type = map(string)
   description = "Container environment variables"

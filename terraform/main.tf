@@ -97,6 +97,8 @@ module "ecs_service" {
   max_capacity = var.max_capacity
   cpu_target   = var.cpu_target
   enable_autoscaling = var.enable_autoscaling
+  deployment_minimum_healthy_percent = var.deployment_minimum_healthy_percent
+  deployment_maximum_percent         = var.deployment_maximum_percent
 
   log_retention_days = var.log_retention_days
 
