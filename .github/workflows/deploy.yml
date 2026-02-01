@@ -231,6 +231,32 @@ jobs:
           --task-definition "${{ steps.taskdef.outputs.task_definition_arn }}" \
           --desired-count 1
 
+    - name: Enable autoscaling (CPU 85%)
+      shell: bash
+      run: |
+        set -euo pipefail
+        CLUSTER="${{ vars.ECS_CLUSTER_NAME }}"
+        SERVICE="${{ vars.ECS_SERVICE_NAME }}"
+        MIN_CAP="${{ vars.ECS_MIN_CAPACITY }}"
+        MAX_CAP="${{ vars.ECS_MAX_CAPACITY }}"
+        if [[ -z "$MIN_CAP" ]]; then MIN_CAP=1; fi
+        if [[ -z "$MAX_CAP" ]]; then MAX_CAP=3; fi
+
+        aws application-autoscaling register-scalable-target \
+          --service-namespace ecs \
+          --scalable-dimension ecs:service:DesiredCount \
+          --resource-id "service/${CLUSTER}/${SERVICE}" \
+          --min-capacity "$MIN_CAP" \
+          --max-capacity "$MAX_CAP"
+
+        aws application-autoscaling put-scaling-policy \
+          --service-namespace ecs \
+          --scalable-dimension ecs:service:DesiredCount \
+          --resource-id "service/${CLUSTER}/${SERVICE}" \
+          --policy-name "${SERVICE}-cpu" \
+          --policy-type TargetTrackingScaling \
+          --target-tracking-scaling-policy-configuration "PredefinedMetricSpecification={PredefinedMetricType=ECSServiceAverageCPUUtilization},TargetValue=85,ScaleInCooldown=60,ScaleOutCooldown=60"
+
     - name: Wait for deployment to complete
       run: |
         aws ecs wait services-stable \
@@ -398,6 +424,32 @@ jobs:
           --service "${{ vars.ECS_SERVICE_NAME }}" \
           --task-definition "${{ steps.taskdef.outputs.task_definition_arn }}" \
           --desired-count 1
+
+    - name: Enable autoscaling (CPU 85%)
+      shell: bash
+      run: |
+        set -euo pipefail
+        CLUSTER="${{ vars.ECS_CLUSTER_NAME }}"
+        SERVICE="${{ vars.ECS_SERVICE_NAME }}"
+        MIN_CAP="${{ vars.ECS_MIN_CAPACITY }}"
+        MAX_CAP="${{ vars.ECS_MAX_CAPACITY }}"
+        if [[ -z "$MIN_CAP" ]]; then MIN_CAP=1; fi
+        if [[ -z "$MAX_CAP" ]]; then MAX_CAP=3; fi
+
+        aws application-autoscaling register-scalable-target \
+          --service-namespace ecs \
+          --scalable-dimension ecs:service:DesiredCount \
+          --resource-id "service/${CLUSTER}/${SERVICE}" \
+          --min-capacity "$MIN_CAP" \
+          --max-capacity "$MAX_CAP"
+
+        aws application-autoscaling put-scaling-policy \
+          --service-namespace ecs \
+          --scalable-dimension ecs:service:DesiredCount \
+          --resource-id "service/${CLUSTER}/${SERVICE}" \
+          --policy-name "${SERVICE}-cpu" \
+          --policy-type TargetTrackingScaling \
+          --target-tracking-scaling-policy-configuration "PredefinedMetricSpecification={PredefinedMetricType=ECSServiceAverageCPUUtilization},TargetValue=85,ScaleInCooldown=60,ScaleOutCooldown=60"
 
     - name: Wait for deployment to complete
       run: |
