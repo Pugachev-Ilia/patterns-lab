@@ -237,6 +237,23 @@ jobs:
           --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
           --services "${{ vars.ECS_SERVICE_NAME }}"
 
+    - name: Debug on failure
+      if: failure()
+      run: |
+        set -euo pipefail
+        aws ecs describe-services \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --services "${{ vars.ECS_SERVICE_NAME }}" \
+          --query "services[0].events[0:5]" \
+          --output table || true
+
+        aws ecs list-tasks \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --service-name "${{ vars.ECS_SERVICE_NAME }}" \
+          --desired-status STOPPED \
+          --max-items 5 \
+          --output text || true
+
     - name: Verify deployment
       run: |
         aws ecs describe-services \
@@ -387,6 +404,23 @@ jobs:
         aws ecs wait services-stable \
           --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
           --services "${{ vars.ECS_SERVICE_NAME }}"
+
+    - name: Debug on failure
+      if: failure()
+      run: |
+        set -euo pipefail
+        aws ecs describe-services \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --services "${{ vars.ECS_SERVICE_NAME }}" \
+          --query "services[0].events[0:5]" \
+          --output table || true
+
+        aws ecs list-tasks \
+          --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+          --service-name "${{ vars.ECS_SERVICE_NAME }}" \
+          --desired-status STOPPED \
+          --max-items 5 \
+          --output text || true
 
     - name: Verify deployment
       run: |
